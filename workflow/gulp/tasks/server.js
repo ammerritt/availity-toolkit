@@ -33,7 +33,22 @@ gulp.task('server:sync', ['server:rest'], function() {
   var path = require('path');
   var fs = require('fs');
   var config = require('../../config');
+  var util = require('gulp-util');
+  
 
+  function shouldOpenBrowser() {
+    var shouldOpen = true;
+    if(util.env.pleaseStopOpeningNewTabs) { //allows for overriding on the command line: e.g. gulp --pleaseStopOpeningNewTabs 
+      shouldOpen = (util.env.pleaseStopOpeningNewTabs === 'true' || util.env.pleaseStopOpeningNewTabs === true) ? false : true;
+    }
+    else {
+      if (typeof developerConfig.development.browserSync !== 'undefined' && typeof developerConfig.development.browserSync.open !== 'undefined') {
+        shouldOpen = developerConfig.development.browserSync.open;
+      } 
+    }
+    return shouldOpen;
+  }
+  
   // Parse out url and create the following config:
   //
   // EX:
@@ -44,15 +59,6 @@ gulp.task('server:sync', ['server:rest'], function() {
   //  route: /api
   //
   // }
-  
-  function shouldOpenBrowser() {
-    var shouldOpen = true;
-    if (typeof developerConfig.development.browserSync !== 'undefined' && typeof developerConfig.development.browserSync.open !== 'undefined') {
-      shouldOpen = developerConfig.development.browserSync.open;
-    } 
-    return shouldOpen;
-  }
-  
   var _url = _.template('http://localhost:<%= port %>/');
   var proxyUrl = _url({port: developerConfig.development.servers.web.port});
   var apiProxy = proxyMiddleware('/api', {target: proxyUrl});
